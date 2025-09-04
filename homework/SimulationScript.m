@@ -11,7 +11,8 @@ function SimulationScript()
 
     A = [2 0 0; 2 2 2; 3 0 -1];
     [V, ~] = eig(A);
-    x0 = 5 * V(:,1);
+    x0 = 5 * V(:,2); % State associated with negative eigenvalue
+    % x0 = 5 * V(:,2); % State associated with positve eigenvalue
     % x0 = [1; 3; 0.2]    % random initial state 
     
     %% Simulate and plot the system using ode
