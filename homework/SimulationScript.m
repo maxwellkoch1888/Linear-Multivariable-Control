@@ -8,10 +8,11 @@ function SimulationScript()
     u = @(t, x) 0;    
     
     % Set the starting point
-    % negative eigenvalue -1, eigenvector [0;-0.5547;0.8321]
-    % positive eigenvalue 2, eigenvector [0.0;1.0;1.0]
-    % random initial state [1.0; 0.75; 3.3]
-    x0 = 5 * [1.0; 0.75; 3.3];
+
+    A = [2 0 0; 2 2 2; 3 0 -1];
+    [V, ~] = eig(A);
+    x0 = 5 * V(:,1);
+    % x0 = [1; 3; 0.2]    % random initial state 
     
     %% Simulate and plot the system using ode
     % Simulate the system
@@ -72,7 +73,7 @@ function [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u)
     t = t0:dt:tf;
     
     % Simulate the output
-    [tvec xvec] = ode45(@(t,x) f(t,x,u(t,x)), t, x0);
+    [tvec, xvec] = ode45(@(t,x) f(t,x,u(t,x)), t, x0);
     
     % Transpose the outputs to get in the correct form
     tvec = tvec';
