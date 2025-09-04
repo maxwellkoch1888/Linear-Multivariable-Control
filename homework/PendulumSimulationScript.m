@@ -1,7 +1,6 @@
 function PendulumSimulationScript()
-    %% Import the xddot and thetaddot functions
-    addpath("homework\Xddot.m");
-    addpath("homework\Thetaddot.m")
+    %% Add the path for the Xddot and Thetaddot functions
+    addpath("homework");
     
     %% Initialize the simulation variables
     t0 = 0; % initial time
@@ -12,7 +11,7 @@ function PendulumSimulationScript()
     u = @(t, x) sin(t);    
     
     % Set the starting point
-    x0 = [0;0;0];
+    x0 = [0;0;0;0];
     
     %% Simulate and plot the system using ode
     % Simulate the system
@@ -24,13 +23,13 @@ function PendulumSimulationScript()
     plotResults(tvec, xvec, uvec, 'b');
     
     %% Simulate and plot the system using Euler (or other method)
-    % Simulate the system
-    [tvec, xvec] = eulerIntegration(x0, t0, dt, tf, u);
-    uvec = getControlVector(tvec, xvec, u);
-    
-    % Plot the results
-    plotResults(tvec, xvec, uvec, 'r:');
-    
+    % % Simulate the system
+    % [tvec, xvec] = eulerIntegration(x0, t0, dt, tf, u);
+    % uvec = getControlVector(tvec, xvec, u);
+    % 
+    % % Plot the results
+    % plotResults(tvec, xvec, uvec, 'r:');
+    % 
     
 end
 
@@ -127,8 +126,8 @@ function zdot = f(t, z, u)
     thetadot= z(4);
     
     % Use acceleration functions for xddot and thetaddot
-    xddot    = Xddot(x, xdot, theta, thetadot, u);
-    thetaddot= Thetaddot(x, xdot, theta, thetadot, u);
+    xddot    = Xddot(theta, thetadot, u, xdot);
+    thetaddot= Thetaddot(theta, thetadot, u, xdot);
     
     % Construct zdot
     zdot = [ xdot;
@@ -140,7 +139,7 @@ end
 function plotResults(tvec, xvec, uvec, color)
 
     % Plot variables
-    fontsize = 18;
+    fontsize = 12;
     linewidth = 2;
     
     % Plot the resulting states
@@ -158,7 +157,7 @@ function plotResults(tvec, xvec, uvec, color)
     
     subplot(5,1,4); hold on;
     plot(tvec, uvec, color, 'linewidth', linewidth);
-    ylabel('theta_dot(t)', 'fontsize', fontsize);
+    ylabel('thetadot(t)', 'fontsize', fontsize);
     xlabel('time (s)', 'fontsize', fontsize);
 
     subplot(5,1,5); hold on;
