@@ -1,11 +1,15 @@
-function SimulationScript()
+function PendulumSimulationScript()
+    %% Import the xddot and thetaddot functions
+    addpath("homework\Xddot.m");
+    addpath("homework\Thetaddot.m")
+    
     %% Initialize the simulation variables
     t0 = 0; % initial time
     dt = 0.1; % time step
     tf = 10.0; % final time
         
     % Set the control input function
-    u = @(t, x) 0;    
+    u = @(t, x) sin(t);    
     
     % Set the starting point
     x0 = [0;0;0];
@@ -69,7 +73,7 @@ function [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u)
     t = t0:dt:tf;
     
     % Simulate the output
-    [tvec xvec] = ode45(@(t,x) f(t,x,u(t,x)), t, x0);
+    [tvec, xvec] = ode45(@(t,x) f(t,x,u(t,x)), t, x0);
     
     % Transpose the outputs to get in the correct form
     tvec = tvec';
@@ -100,7 +104,10 @@ function [tvec, xvec] = eulerIntegration(x0, t0, dt, tf, u)
     xvec(:,1) = x0;
     
     % Simulate forward in time
-    % Write the euler simulation code here    
+    % Write the euler simulation code here
+    for i = 1 : len - 1
+        xvec(:, i+1) = xvec(:,i) + dt * f(tvec(i), xvec(:, i), u(tvec(i), xvec(:, i)));
+    end
 end
 
 function zdot = f(t, z, u)
@@ -114,14 +121,20 @@ function zdot = f(t, z, u)
     %
     % Ouputs:
     %   xdot: time derivative of x(t)
-    z2 = z(2);
+    x       = z(1);
+    xdot    = z(2);
+    theta   = z(3);
+    thetadot= z(4);
     
-    % Linear system matrices
-    A = [2 0 0; 2 2 2; 3 0 -1];
-    B = [1; -2; 1];
+    % Use acceleration functions for xddot and thetaddot
+    xddot    = Xddot(x, xdot, theta, thetadot, u);
+    thetaddot= Thetaddot(x, xdot, theta, thetadot, u);
     
-    % LTI equation
-    zdot = A*z + B*u;
+    % Construct zdot
+    zdot = [ xdot;
+             xddot;
+             thetadot;
+             thetaddot ];
 end
 
 function plotResults(tvec, xvec, uvec, color)
@@ -131,19 +144,24 @@ function plotResults(tvec, xvec, uvec, color)
     linewidth = 2;
     
     % Plot the resulting states
-    subplot(4,1,1); hold on;
+    subplot(5,1,1); hold on;
     plot(tvec, xvec(1,:), color, 'linewidth', linewidth);
-    ylabel('x_1(t)', 'fontsize', fontsize);
+    ylabel('x(t)', 'fontsize', fontsize);
     
-    subplot(4,1,2); hold on;
+    subplot(5,1,2); hold on;
     plot(tvec, xvec(2,:), color, 'linewidth', linewidth);
-    ylabel('x_2(t)', 'fontsize', fontsize);
+    ylabel('xdot(t)', 'fontsize', fontsize);
     
-    subplot(4,1,3); hold on;
+    subplot(5,1,3); hold on;
     plot(tvec, xvec(3,:), color, 'linewidth', linewidth);
-    ylabel('x_3(t)', 'fontsize', fontsize);
+    ylabel('theta(t)', 'fontsize', fontsize);
     
-    subplot(4,1,4); hold on;
+    subplot(5,1,4); hold on;
+    plot(tvec, uvec, color, 'linewidth', linewidth);
+    ylabel('theta_dot(t)', 'fontsize', fontsize);
+    xlabel('time (s)', 'fontsize', fontsize);
+
+    subplot(5,1,5); hold on;
     plot(tvec, uvec, color, 'linewidth', linewidth);
     ylabel('u(t)', 'fontsize', fontsize);
     xlabel('time (s)', 'fontsize', fontsize);
