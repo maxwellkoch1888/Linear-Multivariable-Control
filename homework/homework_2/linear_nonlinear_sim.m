@@ -5,17 +5,25 @@ function linear_nonlinear_sim()
     tf = 10.0; % final time
         
     % Set the control input functions
-    u = @(t, x) 0;    
+    % From 2.3d, T(t) = b*theta_dot - mgl*sin(t)
+    g = 9.8;
+    m = 1/9.8;
+    l = 0.25;
+    b = 1;
+    u = @(t, x) b*0 - m*g*l*sin(t);    
     
     % Set the starting points
     A = [0 1; sqrt(2)*9.8*(2*0.25) -9.8/(0.25^2)];
     [V, ~] = eig(A);
     x0_1 = V(:,2); % State associated with negative eigenvalue
     x0_2 = V(:,1); % State associated with positive eigenvalue
-    x0_3 = V(:,2); % State associated with theta = pi/4 - 0.05, thetad = 0
-    x0_list = {x0_1, x0_2, x0_3};
+    x0_3 = [pi/4 - 0.05; 0]; % State associated with theta = pi/4 - 0.05, thetad = 0
+    x0_list = [x0_1, x0_2, x0_3];
     
-    for x0 = x0_list
+    for k = 1:size(x0_list,2)
+        % Pull out the state
+        x0 = x0_list(:,k);
+
         %% Simulate and plot the system using ode
         % Simulate the system
         [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u);
@@ -86,7 +94,7 @@ function xdot = f(t, x, u)
     %   xdot: time derivative of x(t)
     
     % Define system parameters
-    g = 1.8;
+    g = 9.8;
     m = 1/9.8;
     l = 0.25;
     b = 1;
