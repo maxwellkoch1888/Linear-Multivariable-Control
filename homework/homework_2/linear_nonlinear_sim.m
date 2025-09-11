@@ -29,9 +29,13 @@ function linear_nonlinear_sim()
         [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u);
         uvec = getControlVector(tvec, xvec, u);
         
+        % Define the equilibrium states
+        xeq = [pi/4; 0];
+        ueq = b*0 - m*g*l*sin(pi/4);
+
         % Plot the resulting states
         figure;
-        plotResults(tvec, xvec, uvec, 'b');
+        plotResults(tvec, xvec, uvec, xeq, ueq, 'b');
     end
 end
 
@@ -73,15 +77,20 @@ function [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u)
     % Initialize the time
     t = t0:dt:tf;
     
-    % Simulate the output
-    [tvec, xvec] = ode45(@(t,x) f(t,x,u(t,x)), t, x0);
+    % Simulate the linear output
+    [tvec, xvec] = ode45(@(t,x) f(x,u(t,x)), t, x0);
+
+    % % Simulate the nonlinear output
+    % [tvec_2, xvec_2] = ode45(@(t,x) nonlinear_xdot(x, u(t,x)), t, x0);
     
     % Transpose the outputs to get in the correct form
     tvec = tvec';
     xvec = xvec';    
+    % tvec_2 = tvec_2';
+    % xvec_2 = xvec_2';
 end
 
-function xdot = f(t, x, u)
+function xdot = f(x, u)
     %f calculates the state dynamics using the current time, state, and
     %control input
     %
@@ -92,41 +101,68 @@ function xdot = f(t, x, u)
     %
     % Ouputs:
     %   xdot: time derivative of x(t)
-    
-    % Define system parameters
+
+    % Define the variables
     g = 9.8;
     m = 1/9.8;
     l = 0.25;
     b = 1;
+    
+    % Linear system matrices
+    A = [0 1; sqrt(2)*g/(2*l) -b/(m*l^2)];
+    B = [0; 1/(m*l^2)];
+    
+    % LTI equation
+    xdot = A*x + B*u;
+end
 
-    % Pull out the states
+function xdot = nonlinear_xdot(x, u)
+    % Calculates the state dynamics using the 
+
+    % Define the variables
+    g = 9.8;
+    m = 1/9.8;
+    l = 0.25;
+    b = 1;
+    
+    % Pull out states
     theta = x(1);
     theta_dot = x(2);
 
-    % Nonlinear system
-    theta_ddot = (m*g*l*sin(theta) - b*theta_dot + u) / (m*l^2);
+    % Calculate theta double dot
+    theta_ddot = g/l * sin(theta) - b/(m*l^2) * theta_dot + u/(m*l^2);
 
-    % Return the state derivative
-    xdot = [theta_dot; theta_ddot];
+    % Build xdot
+    xdot = [theta_dot, theta_ddot];
 end
 
-function plotResults(tvec, xvec, uvec, color)
+function plotResults(tvec, xvec, uvec, xeq, ueq, color)
+   
+    % Build the actual state
+    real_state = xvec + xeq;
+    real_input = uvec + ueq;
+    
+    % xvec(:,2)
+    % real_state(:,2)
 
+    % uvec(:,2)
+    % real_input(:,2)
+    
     % Plot variables
     fontsize = 18;
     linewidth = 2;
     
     % Plot the resulting states
     subplot(3,1,1); hold on;
-    plot(tvec, xvec(1,:), color, 'linewidth', linewidth);
+    plot(tvec, real_state(1,:), color, 'linewidth', linewidth);
     ylabel('Theta (t)', 'fontsize', fontsize);
     
     subplot(3,1,2); hold on;
-    plot(tvec, xvec(2,:), color, 'linewidth', linewidth);
+    plot(tvec, real_state(2,:), color, 'linewidth', linewidth);
     ylabel('Theta Dot (t)', 'fontsize', fontsize);
     
     subplot(3,1,3); hold on;
-    plot(tvec, uvec, color, 'linewidth', linewidth);
+    plot(tvec, real_input, color, 'linewidth', linewidth);
     ylabel('u(t)', 'fontsize', fontsize);
     xlabel('Time (s)', 'fontsize', fontsize);
 end
