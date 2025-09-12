@@ -1,4 +1,4 @@
-function linear_nonlinear_sim()
+function nonlinear_sim()
     %% Initialize the simulation variables
     t0 = 0; % initial time
     dt = 0.1; % time step
@@ -10,14 +10,14 @@ function linear_nonlinear_sim()
     m = 1/9.8;
     l = 0.25;
     b = 1;
-    u = @(t, x) b*0 - m*g*l*sin(t);    
+    u = @(t, x) b*0 - m*g*l*sin(pi/4);  
     
     % Set the starting points
     A = [0 1; sqrt(2)*9.8*(2*0.25) -9.8/(0.25^2)];
     [V, ~] = eig(A);
     x0_1 = V(:,2); % State associated with negative eigenvalue
     x0_2 = V(:,1); % State associated with positive eigenvalue
-    x0_3 = [pi/4 - 0.05; 0]; % State associated with theta = pi/4 - 0.05, thetad = 0
+    x0_3 = [pi/4-0.05; 0]; % State associated with theta = pi/4 - 0.05, thetad = 0
     x0_list = [x0_1, x0_2, x0_3];
     
     for k = 1:size(x0_list,2)
@@ -78,42 +78,11 @@ function [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u)
     t = t0:dt:tf;
     
     % Simulate the linear output
-    [tvec, xvec] = ode45(@(t,x) f(x,u(t,x)), t, x0);
-
-    % % Simulate the nonlinear output
-    % [tvec_2, xvec_2] = ode45(@(t,x) nonlinear_xdot(x, u(t,x)), t, x0);
+    [tvec, xvec] = ode45(@(t,x) nonlinear_xdot(x,u(t,x)), t, x0);
     
     % Transpose the outputs to get in the correct form
     tvec = tvec';
     xvec = xvec';    
-    % tvec_2 = tvec_2';
-    % xvec_2 = xvec_2';
-end
-
-function xdot = f(x, u)
-    %f calculates the state dynamics using the current time, state, and
-    %control input
-    %
-    % Inputs:
-    %   t: current time
-    %   x: current state
-    %   u: current control input
-    %
-    % Ouputs:
-    %   xdot: time derivative of x(t)
-
-    % Define the variables
-    g = 9.8;
-    m = 1/9.8;
-    l = 0.25;
-    b = 1;
-    
-    % Linear system matrices
-    A = [0 1; sqrt(2)*g/(2*l) -b/(m*l^2)];
-    B = [0; 1/(m*l^2)];
-    
-    % LTI equation
-    xdot = A*x + B*u;
 end
 
 function xdot = nonlinear_xdot(x, u)
@@ -123,7 +92,7 @@ function xdot = nonlinear_xdot(x, u)
     g = 9.8;
     m = 1/9.8;
     l = 0.25;
-    b = 1;
+    b = 1;   
     
     % Pull out states
     theta = x(1);
@@ -132,8 +101,9 @@ function xdot = nonlinear_xdot(x, u)
     % Calculate theta double dot
     theta_ddot = g/l * sin(theta) - b/(m*l^2) * theta_dot + u/(m*l^2);
 
-    % Build xdot
-    xdot = [theta_dot, theta_ddot];
+    % Build and transpose xdot
+    xdot = [theta_dot, theta_ddot]';
+
 end
 
 function plotResults(tvec, xvec, uvec, xeq, ueq, color)
