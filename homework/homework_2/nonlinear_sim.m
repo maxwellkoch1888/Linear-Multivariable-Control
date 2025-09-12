@@ -11,13 +11,17 @@ function nonlinear_sim()
     l = 0.25;
     b = 1;
     u = @(t, x) b*0 - m*g*l*sin(pi/4);  
-    
+
+    % Define the equilibrium states
+    xeq = [pi/4; 0];
+    ueq = b*0 - m*g*l*sin(pi/4);
+
     % Set the starting points
-    A = [0 1; sqrt(2)*9.8*(2*0.25) -9.8/(0.25^2)];
+    A = [0 1; sqrt(2)*9.8/(2*0.25) -9.8/(0.25^2)];
     [V, ~] = eig(A);
-    x0_1 = V(:,2); % State associated with negative eigenvalue
-    x0_2 = V(:,1); % State associated with positive eigenvalue
-    x0_3 = [pi/4-0.05; 0]; % State associated with theta = pi/4 - 0.05, thetad = 0
+    x0_1 = V(:,2) + xeq; % State associated with negative eigenvalue
+    x0_2 = V(:,1) + xeq; % State associated with positive eigenvalue
+    x0_3 = [-0.05; 0] + xeq; % State associated with theta = pi/4 - 0.05, thetad = 0
     x0_list = [x0_1, x0_2, x0_3];
     
     for k = 1:size(x0_list,2)
@@ -28,14 +32,11 @@ function nonlinear_sim()
         % Simulate the system
         [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u);
         uvec = getControlVector(tvec, xvec, u);
-        
-        % Define the equilibrium states
-        xeq = [pi/4; 0];
-        ueq = b*0 - m*g*l*sin(pi/4);
+
 
         % Plot the resulting states
         figure;
-        plotResults(tvec, xvec, uvec, xeq, ueq, 'b');
+        plotResults(tvec, xvec, uvec, 'b');
     end
 end
 
@@ -106,33 +107,23 @@ function xdot = nonlinear_xdot(x, u)
 
 end
 
-function plotResults(tvec, xvec, uvec, xeq, ueq, color)
-   
-    % Build the actual state
-    real_state = xvec + xeq;
-    real_input = uvec + ueq;
-    
-    % xvec(:,2)
-    % real_state(:,2)
+function plotResults(tvec, xvec, uvec, color)
 
-    % uvec(:,2)
-    % real_input(:,2)
-    
     % Plot variables
     fontsize = 18;
     linewidth = 2;
     
     % Plot the resulting states
     subplot(3,1,1); hold on;
-    plot(tvec, real_state(1,:), color, 'linewidth', linewidth);
+    plot(tvec, xvec(1,:), color, 'linewidth', linewidth);
     ylabel('Theta (t)', 'fontsize', fontsize);
     
     subplot(3,1,2); hold on;
-    plot(tvec, real_state(2,:), color, 'linewidth', linewidth);
+    plot(tvec, xvec(2,:), color, 'linewidth', linewidth);
     ylabel('Theta Dot (t)', 'fontsize', fontsize);
     
     subplot(3,1,3); hold on;
-    plot(tvec, real_input, color, 'linewidth', linewidth);
+    plot(tvec, uvec, color, 'linewidth', linewidth);
     ylabel('u(t)', 'fontsize', fontsize);
     xlabel('Time (s)', 'fontsize', fontsize);
 end
