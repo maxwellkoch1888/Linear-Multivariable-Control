@@ -18,9 +18,9 @@ function linear_sim()
     
     % Set the starting points
     A = [0 1; sqrt(2)*9.8/(2*0.25) -9.8/(0.25^2)];
-    [V, ~] = eig(A)
-    delta_x0_1 = V(:,2) % State associated with negative eigenvalue
-    delta_x0_2 = V(:,1) % State associated with positive eigenvalue
+    [V, ~] = eig(A);
+    delta_x0_1 = V(:,2); % State associated with negative eigenvalue
+    delta_x0_2 = V(:,1); % State associated with positive eigenvalue
     delta_x0_3 = [-0.05; 0]; % State associated with theta = pi/4 - 0.05, thetad = 0
     delta_x0_list = [delta_x0_1, delta_x0_2, delta_x0_3];
     
