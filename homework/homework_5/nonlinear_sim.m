@@ -24,45 +24,24 @@ function nonlinear_sim()
     [tvec, xvec] = matlabOde45(x0, t0, dt, tf, u);
     uvec = getControlVector(tvec, xvec, u);
 
-    % Compute Lyapunov-based bound (using linearized system results)
-    % Define P (from solving Lyapunov equation for A,B around equilibrium)
-    A = [0, 1; -g/2, -b/(m*l^2)];
+
+    % Calculate the upper bound using lyapunov equation
+    % Calculate the value of P
+    A = [0, 1; -g/l, -b/(m*l^2)];
     Q = eye(2);
     P = lyap(A', Q);
 
     Pvals = eig(P);
     Qvals = eig(Q);
     Pmin = min(Pvals);
-    mu = -min(Qvals)/max(Pvals);    
-    xeq = [pi; 0];
+    mu = -min(Qvals)/max(Pvals);
+    V0 = x0' * P * x0;
 
-    % Compute initial Lyapunov function
-    delta_x0 = x0 - xeq;
-    V0 = delta_x0' * P * delta_x0;
-
-    % Minimum eigenvalue of P
-    Pmin = min(eig(P));
-
-    % Compute bound
-    convergence_bound = (1/Pmin) * V0 * exp(mu * (tvec - t0));
-    bound_on_norm = sqrt(convergence_bound);
-
-    %% Plot actual deviation norm vs. bound
-    delta_xvec = xvec - xeq;
-    delta_norm = sqrt(sum(delta_xvec.^2,1));
-
-    figure;
-    plot(tvec, delta_norm, 'b', 'LineWidth', 2); hold on;
-    plot(tvec, bound_on_norm, 'r--', 'LineWidth', 2);
-    legend('||x - x_{eq}|| (simulated)', 'Lyapunov bound');
-    xlabel('Time (s)'); ylabel('State deviation norm');
-    grid on;
-
-
+    convergence_bound = (1 / Pmin) * exp(mu * (tvec - t0)) * V0; 
 
     % Plot the resulting states
     figure;
-    plotResults(tvec, xvec, uvec, 'b');
+    plotResults(xvec, tvec, uvec, convergence_bound, 'b', xeq);
 end
 
 function u_vec = getControlVector(tvec, xvec, u)
@@ -132,24 +111,37 @@ function xdot = nonlinear_xdot(x, u)
 
 end
 
-function plotResults(tvec, xvec, uvec, color)
+function plotResults(xvec, tvec, uvec, convergence_bound, color, xeq)
 
-    % Plot variables
+    % Norm of deviation
+    delta_xvec = xvec - xeq;    
+    delta_norm = sqrt(sum(delta_xvec.^2,1));
+    bound_on_norm = sqrt(convergence_bound);
+
+    % Plotting variables
     fontsize = 18;
     linewidth = 2;
     
     % Plot the resulting states
-    subplot(3,1,1); hold on;
+    subplot(4,1,1); hold on;
     plot(tvec, xvec(1,:), color, 'linewidth', linewidth);
     ylabel('Theta (t)', 'fontsize', fontsize);
     
-    subplot(3,1,2); hold on;
+    subplot(4,1,2); hold on;
     plot(tvec, xvec(2,:), color, 'linewidth', linewidth);
     ylabel('Theta Dot (t)', 'fontsize', fontsize);
     
-    subplot(3,1,3); hold on;
+    subplot(4,1,3); hold on;
     plot(tvec, uvec, color, 'linewidth', linewidth);
     ylabel('u(t)', 'fontsize', fontsize);
     xlabel('Time (s)', 'fontsize', fontsize);
+
+    % Plot convergence bound vs actual state norm
+    subplot(4,1,4); hold on;
+    plot(tvec, delta_norm, 'k', 'linewidth', linewidth);             % actual deviation norm
+    plot(tvec, bound_on_norm, 'r--', 'linewidth', linewidth);        % Lyapunov bound
+    ylabel('||\delta x||', 'fontsize', fontsize);
+    xlabel('Time (s)', 'fontsize', fontsize);
+    legend('Actual norm','Lyapunov bound','Location','northeast');
 end
 

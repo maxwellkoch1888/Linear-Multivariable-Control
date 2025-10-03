@@ -26,7 +26,7 @@ function linear_sim()
 
     % Calculate the upper bound using lyapunov equation
     % Calculate the value of P
-    A = [0, 1; -g/2, -b/(m*l^2)];
+    A = [0, 1; -g/l, -b/(m*l^2)];
     Q = eye(2);
     P = lyap(A', Q);
 
@@ -132,27 +132,24 @@ function plotResults(tvec, delta_xvec, delta_uvec, xeq, ueq, convergence_bound, 
     linewidth = 2;
     
     % Plot the resulting states
-    subplot(5,1,1); hold on;
+    subplot(4,1,1); hold on;
     plot(tvec, real_state(1,:), color, 'linewidth', linewidth);
     ylabel('Theta (t)', 'fontsize', fontsize);
     
-    subplot(5,1,2); hold on;
+    subplot(4,1,2); hold on;
     plot(tvec, real_state(2,:), color, 'linewidth', linewidth);
     ylabel('Theta Dot (t)', 'fontsize', fontsize);
     
-    subplot(5,1,3); hold on;
+    subplot(4,1,3); hold on;
     plot(tvec, real_input, color, 'linewidth', linewidth);
     ylabel('u(t)', 'fontsize', fontsize);
     xlabel('Time (s)', 'fontsize', fontsize);
 
     % Plot convergence bound vs actual state norm
-    subplot(5,1,4); hold on;
-    plot(tvec, bound_on_norm, 'b', 'linewidth', linewidth); % Lyapunov bound
-    ylabel('Lyap Bound', 'fontsize', fontsize);
-    xlabel('Time (s)', 'fontsize', fontsize);
-
-    subplot(5,1,5); hold on;
-    plot(tvec, delta_norm, 'b', 'linewidth', linewidth);      % actual deviation norm
+    subplot(4,1,4); hold on;
+    plot(tvec, delta_norm, 'k', 'linewidth', linewidth);             % actual deviation norm
+    plot(tvec, bound_on_norm, 'r--', 'linewidth', linewidth);        % Lyapunov bound
     ylabel('||\delta x||', 'fontsize', fontsize);
     xlabel('Time (s)', 'fontsize', fontsize);
+    legend('Actual norm','Lyapunov bound','Location','northeast');
 end
