@@ -17,16 +17,31 @@ function linear_sim()
     delta_u = @(t, x) 0;  
     
     % Set the starting points
-    delta_x0 = [pi-0.05; 0]; % State associated with theta = pi - 0.05, thetad = 0
+    delta_x0 = [-0.05; 0]; % State associated with theta = pi - 0.05, thetad = 0
 
     %% Simulate and plot the system using ode
     % Simulate the system
     [tvec, delta_xvec] = matlabOde45(delta_x0, t0, dt, tf, delta_u);
     uvec = getControlVector(tvec, delta_xvec, delta_u);
 
+    % Calculate the upper bound using lyapunov equation
+    % Calculate the value of P
+    A = [0, 1; -g/2, -b/(m*l^2)];
+    Q = eye(2);
+    P = lyap(A', Q);
+
+    Pvals = eig(P);
+    Qvals = eig(Q);
+    Pmin = min(Pvals);
+    mu = -min(Qvals)/max(Pvals);
+    V0 = delta_x0' * P * delta_x0;
+
+    convergence_bound = (1 / Pmin) * exp(mu * (tvec - t0)) * V0; 
+
     % Plot the resulting states
     figure;
-    plotResults(tvec, delta_xvec, uvec, xeq, ueq, 'b');
+    plotResults(tvec, delta_xvec, uvec, xeq, ueq, convergence_bound, 'b');
+
 end
 
 function u_vec = getControlVector(tvec, xvec, delta_u)
@@ -102,28 +117,42 @@ function xdot = f(x, u)
     xdot = A*x + B*u;
 end
 
-function plotResults(tvec, delta_xvec, delta_uvec, xeq, ueq, color)
+function plotResults(tvec, delta_xvec, delta_uvec, xeq, ueq, convergence_bound, color)
    
     % Build the actual state
     real_state = delta_xvec + xeq;
     real_input = delta_uvec + ueq;
-    
-    % Plot variables
+
+    % Norm of deviation
+    delta_norm = sqrt(sum(delta_xvec.^2,1));
+    bound_on_norm = sqrt(convergence_bound);
+
+    % Plotting variables
     fontsize = 18;
     linewidth = 2;
     
     % Plot the resulting states
-    subplot(3,1,1); hold on;
+    subplot(5,1,1); hold on;
     plot(tvec, real_state(1,:), color, 'linewidth', linewidth);
     ylabel('Theta (t)', 'fontsize', fontsize);
     
-    subplot(3,1,2); hold on;
+    subplot(5,1,2); hold on;
     plot(tvec, real_state(2,:), color, 'linewidth', linewidth);
     ylabel('Theta Dot (t)', 'fontsize', fontsize);
     
-    subplot(3,1,3); hold on;
+    subplot(5,1,3); hold on;
     plot(tvec, real_input, color, 'linewidth', linewidth);
     ylabel('u(t)', 'fontsize', fontsize);
     xlabel('Time (s)', 'fontsize', fontsize);
-end
 
+    % Plot convergence bound vs actual state norm
+    subplot(5,1,4); hold on;
+    plot(tvec, bound_on_norm, 'b', 'linewidth', linewidth); % Lyapunov bound
+    ylabel('Lyap Bound', 'fontsize', fontsize);
+    xlabel('Time (s)', 'fontsize', fontsize);
+
+    subplot(5,1,5); hold on;
+    plot(tvec, delta_norm, 'b', 'linewidth', linewidth);      % actual deviation norm
+    ylabel('||\delta x||', 'fontsize', fontsize);
+    xlabel('Time (s)', 'fontsize', fontsize);
+end
