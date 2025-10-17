@@ -9,10 +9,6 @@ close all;
     t2 = 2.5; % Time to get to x2
     tf = t1 + t2; % Total time
 
-    % set initial conditions:
-    % x0 = x1;
-    x0 = rand(8,1);
-
     % Get system matrices
     P = getSystemMatrices();
     A = P.A;
@@ -23,7 +19,7 @@ close all;
     Wr = integral(fun, 0, tf, 'ArrayValued', true);
 
     % Compute the open-loop control parameters
-    delta_x = x2 - expm(A*tf)*x0;
+    delta_x = x2 - expm(A*tf)*x1;
 
     % Define control law u(t)
     u = @(t, x) B' * expm(A'*(tf - t)) * (Wr \ delta_x);
@@ -34,6 +30,10 @@ close all;
     dt = 0.01; % time step
     tf = t1+t2; % final time
     t = t0:dt:tf;
+
+    % set initial conditions:
+    % x0 = x1;
+    x0 = rand(8,1);
     
     %% Simulate and plot the system using ode
     % Simulate the system          
