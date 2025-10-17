@@ -30,7 +30,7 @@ u = [ar; ai];
 % State dynamics (create a vector of the dynamics, i.e., f = [rdot; thetadot; rddot; thetaddot] )
 f = [x(3);
      x(4);
-     x(1)*x(4)^2 - mu/(x(1)^2) + u(1);
+     -mu/x(1)^2 + u(1) + x(4)^2*x(1);
      (u(2) - 2*x(3)*x(4))/x(1)];
 
 %% Find trajectory to linearize about
@@ -42,9 +42,12 @@ R = sym('R', 'real'); % Desired radius of orbit
 f_sol = subs(f, r, R); % This substitues the big R variable for the little r
 f_sol = subs(f_sol, ar, 0); % This substitutes in 0 for ar
 f_sol = subs(f_sol, ai, 0); % Substitute 0 in for ai
+f_sol = subs(f_sol, f(1), 0); % Substitute 0 for rdot
+f_sol = subs(f_sol, f(3), 0); % Substitute 0 for rddot
 
 % Solve for the solution of thetadot (you can use Matlab's "solve" command)
 thetadot_sol = solve(f_sol(3)==0, thetadot); % You can do it using two inputs, the third element of f_sol and the symbolic variable for \dot{\theta}
+thetadot_sol = thetadot_sol(1)
 
 %% Linear system about the trajectory
 % Create the jacobians
@@ -55,28 +58,28 @@ df_du = jacobian(f, u); % Create a jacobian with respect to u
 % trajectory - replace all "[]" values with the correct value
 w = sym('w', 'real'); % Solution for theta_dot
 t = sym('t', 'real'); % Time
-r = 200;
-rdot = 0;
-theta = 0;
-thetadot = thetadot_sol;
-ar = 0;
-ai = 0;
+r_val = R;
+rdot_val = 0;
+theta_val = w * t; % System does not depend on theta, still LTI
+thetadot_val = w;
+ar_val = 0;
+ai_val = 0;
 
 % Evaluate linearization at the trajectory solution
 df_dx_sol = simplify(subs(df_dx, [r, theta, rdot, thetadot, ar, ai, mu], ...
-                                  [R, 0, 0, thetadot_eq, 0, 0, mu]));
+            [r_val, theta_val, rdot_val, thetadot_val, ar_val, ai_val, mu]));
 df_du_sol = simplify(subs(df_du, [r, theta, rdot, thetadot, ar, ai, mu], ...
-                                  [R, 0, 0, thetadot_eq, 0, 0, mu]));
-
+            [r_val, theta_val, rdot_val, thetadot_val, ar_val, ai_val, mu]));
+    
 %% Evaluate the linearized system
-mu = 4.302 * 10^(-3);
-R = R_des; % Note, this is passed into the function as a parameter
-w =thetadot_sol; % What is the solution
+mu_val = 4.302e-3;
+R_val = R_des; % Note, this is passed into the function as a parameter
+w_val = double(subs(thetadot_sol, [R, mu], [R_val, mu_val])); % What is the solution
 
 % Get the A and B matrices (need to convert the symbolic matrices to double
-% matrices)
-A = double(subs(df_dx_sol)); % Takes the solution for df_dx and creates a matrix of doubles
-B = double(subs(df_du_sol)); % Need to do the same thing for B
+% precision matrices)
+A = double(subs(df_dx_sol, [R, w, mu], [R_val, w_val, mu_val])) % Takes the solution for df_dx and creates a matrix of doubles
+B = double(subs(df_du_sol, [R, w, mu], [R_val, w_val, mu_val])) % Need to do the same thing for B
 
 % Evaluate eigenvalues of A matrix
 eig_A = eig(A)

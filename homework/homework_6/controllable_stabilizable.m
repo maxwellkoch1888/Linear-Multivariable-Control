@@ -94,6 +94,31 @@ disp("-------------------------------------------------")
 disp("Simple System Design")
 controllable(list_of_A, list_of_B)
 
+%% SATELLITE PROBLEM
+mu = 4.306*10^(-3);
+A = [0, 0, 1, 0;
+     0, 0, 0, 1; 
+     3*mu/200, 0, 0, 2*200*sqrt(mu/(200^3));
+     0, 0, -2/200*sqrt(mu/(200^3)), 0];
+B = [0,0;
+     0,0;
+     1,0
+     0,1/200];
+
+list_of_A = {A};
+list_of_B = {B};
+
+% DETERMINE IF THE SYSTEMS ARE CONTROLLABLE
+disp("-------------------------------------------------")
+disp("Satellite Problem")
+controllable(list_of_A, list_of_B)
+
+% PLACE POLES FOR SATELLITE SYSTEM
+desiredPoles = [-1, -1.5, -2, -2.5]; 
+K = place(A, B, desiredPoles);
+disp("Gain matrix K:")
+disp(K)
+
 %% FUNCTIONS
 
 % FIND N AND RANK OF GAMMMA
@@ -120,9 +145,9 @@ function abar_char(A, B)
     % DETERMINE THE DIMENSIONS OF THE MATRICES
     [n,m] = size(B);
 
-    % BUILD THE K MATRIX FOR UP TO n = m = 3
-    syms k1 k2 k3 k4 k5 k6
-    k_init = [k1, k2, k3; k4, k5, k6];
+    % BUILD THE K MATRIX FOR UP TO n = m = 4
+    syms k1 k2 k3 k4 k5 k6 k7 k8
+    k_init = [k1, k2, k3, k4; k5, k6, k7, k8];
 
     % make k mxn matrix
     k = k_init(1:m, 1:n);
