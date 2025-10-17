@@ -190,7 +190,7 @@ function stabilizable(A,B)
     end
     
     % PRINT STATEMENT
-    if size(ustabilizable) == 0
+    if (size(ustabilizable) == 0) && (eig(A) )
         disp("System is stabilizable.")
     else 
         disp("System is NOT stabilizable.")

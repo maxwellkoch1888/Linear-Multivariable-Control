@@ -7,22 +7,56 @@ close all;
     x2 = 0.5.*ones(8,1);
     t1 = 2.5; % Time to get to zero
     t2 = 2.5; % Time to get to x2
-    tf = t1 + t2; % Total time
+    tf = t1 + t2;
 
     % Get system matrices
     P = getSystemMatrices();
     A = P.A;
     B = P.B;
 
-    % Compute the reachability (controllability) Gramian for LTI system
-    fun = @(tau) expm(A*(tf - tau)) * B * B' * expm(A'*(tf - tau));
-    Wr = integral(fun, 0, tf, 'ArrayValued', true);
+    function eta = eta1()
+        % ODE for Gramian accumulation
+        f_wr = @(tau, W_flat) reshape( ...
+            expm(A*(t1 - tau)) * B * B' * expm(A'*(t1 - tau)), [], 1);
+    
+        % Integrate from 0 to t1 with W(0) = zeros(8,8)
+        W0 = zeros(8,8);
+        [tvec, Wmat] = ode45(f_wr, [0, t1], W0(:));
+    
+        % Extract final Gramian value and reshape back to 8x8
+        Wr = reshape(Wmat(end, :)', 8, 8);
+    
+        % Compute the open-loop control parameters
+        delta_x = -expm(A*t1)*x1;
+        eta = Wr \ delta_x;
+    end
 
-    % Compute the open-loop control parameters
-    delta_x = x2 - expm(A*tf)*x1;
+    function eta = eta2()
+
+        fun = @(tau) expm(A*(tf - tau)) * B * B' * expm(A'*(tf - tau));
+        Wr = integral(fun, t2, tf, 'ArrayValued', true);
+
+        % Compute the open-loop control parameters
+        delta_x = x2 - expm(A*tf)*zeros(8,1);
+       
+        eta = Wr \ delta_x;
+    end
 
     % Define control law u(t)
-    u = @(t, x) B' * expm(A'*(tf - t)) * (Wr \ delta_x);
+    function u = u(t, x) 
+        if t < t1
+            eta = eta1();
+            tau = t; % local time for segment 1
+            u = B' * expm(A'*(t1 - tau)) * eta;
+        elseif t < tf
+            eta = eta2();
+            tau = t - t1; % local time for segment 2
+            u = B' * expm(A'*(t2 - tau)) * eta;
+        else
+            u = zeros(4,1);
+        end
+        % disp(u)
+    end
 
     %% Initialize the simulation variables
     % Time variables
@@ -32,12 +66,15 @@ close all;
     t = t0:dt:tf;
     
     % set initial conditions:
-    x0 = x1;
-    % x0 = rand(8,1);
+    % x0 = x1;
+    x0 = rand(8,1);
     
     %% Simulate and plot the system using ode
-    % Simulate the system          
-    [tvec xvec] = ode45(@(t,x) f(t,x, u(t,x), P), t, x0);
+    % Simulate the system     
+    eta1_val = eta1();
+    eta2_val = eta2();
+    u_func = @(t,x) controlLaw(t,x,eta1_val,eta2_val,P,t1,t2);
+    [tvec,xvec] = ode45(@(t,x) f(t,x,u_func(t,x),P), t, x0);
     tvec = tvec';
     xvec = xvec';  
     
