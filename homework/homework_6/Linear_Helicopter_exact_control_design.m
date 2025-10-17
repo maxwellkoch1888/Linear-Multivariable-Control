@@ -7,13 +7,23 @@ close all;
     x2 = 0.5.*ones(8,1);
     t1 = 2.5; % Time to get to zero
     t2 = 2.5; % Time to get to x2
-    
-    % Calculate the control
+    tf = t1 + t2; % Total time
+
+    % Get system matrices
     P = getSystemMatrices();
-        
-    % Set the control input function
-    u = @(t,x) zeros(4,1);    
-    
+    A = P.A;
+    B = P.B;
+
+    % Compute the reachability (controllability) Gramian for LTI system
+    fun = @(tau) expm(A*(tf - tau)) * B * B' * expm(A'*(tf - tau));
+    Wr = integral(fun, 0, tf, 'ArrayValued', true);
+
+    % Compute the open-loop control parameters
+    delta_x = x2 - expm(A*tf)*x1;
+
+    % Define control law u(t)
+    u = @(t, x) B' * expm(A'*(tf - t)) * (Wr \ delta_x);
+
     %% Initialize the simulation variables
     % Time variables
     t0 = 0; % initial time
@@ -23,7 +33,7 @@ close all;
     
     % set initial conditions:
     x0 = x1;
-    %x0 = rand(8,1);
+    % x0 = rand(8,1);
     
     %% Simulate and plot the system using ode
     % Simulate the system          
