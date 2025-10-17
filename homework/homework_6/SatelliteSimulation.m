@@ -222,7 +222,7 @@ function plotResults(tvec, xvec, uvec, color)
     ylabel('$a_r(t)$', 'fontsize', fontsize, 'Interpreter','latex');
     
     subplot(6,1,6); hold on;
-    plot(tvec, uvec(1,:), color, 'linewidth', linewidth);
+    plot(tvec, uvec(2,:), color, 'linewidth', linewidth);
     ylabel('$a_i(t)$', 'fontsize', fontsize, 'Interpreter','latex');
     xlabel('Time (seconds)', 'fontsize', fontsize);   
     
