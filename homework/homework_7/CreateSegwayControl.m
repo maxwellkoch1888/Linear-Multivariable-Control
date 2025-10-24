@@ -65,28 +65,47 @@ f = [v*cos(psi); v*sin(psi); omega; omegadot; vdot; phidot; phiddot];
 df_dx = jacobian(f, X);
 df_du = jacobian(f, U);
 
-%% Linearize Equations about x = 0
-% Set the states to zero
-
-% Evaluate the dynamics at the zero state and control
-
-% Create the state matrices (A,B) from df_dx and df_du
-
-% Calculate controllability
-
+% %% Linearize Equations about x = 0
+% % Set the states to zero and evaluate the dynamics at the zero state and control
+% zero_state_f = subs(f, [x, y, psi, omega, v, phi, phidot, u1, u2], [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+% 
+% if zero_state_f == 0
+%     disp('Zero-state and zero input is an equilibrium point.')
+%     disp('')
+% end
+% % Create the state matrices (A,B) from df_dx and df_du
+% A = subs(df_dx, [x, y, psi, omega, v, phi, phidot, u1, u2], [0, 0, 0, 0, 0, 0, 0, 0, 0]); 
+% B = subs(df_du, [x, y, psi, omega, v, phi, phidot, u1, u2], [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+% 
+% % Calculate controllability
+% gamma = ctrb(A, B);
+% gamma_rank = rank(gamma);
+% [n, ~] = size(A); 
+% if gamma_rank == n
+%     disp('The system is controllable.');
+% else
+%     disp('The system is not controllable.');
+% end
 
 %% Linearize Equations about z = 0 (Note, you will want to comment out the previous section so that you 
 %%                                  are still working with symbolic variables at this point)
 % State equations of reduced state (i.e., define z, u, and dynamics of z state -fz)
+z = [omega; v; phi; phidot];
+fz = [omegadot; vdot; phidot; phiddot];
 
 % Calculate the jacobians (use the dynamics of the z state to calculate dfz/dz and dfz/du)
+dfz_dx = jacobian(fz, z); 
+dfz_dx = jacobian(fz, U);
 
 % Set the states to zero
-
 % Show that this is an equilibrium
+zero_state_fz = subs(fz, [omega, v, phi, phidot, u1, u2], [0, 0, 0, 0, 0, 0]);
+if zero_state_fz == 0
+    disp('Reduced state at zero-state and zero input is an eq point.')
+end 
 
 % Create the state matrices (A,B) from df_dx and df_du
-
+A = subs(dfz_dx, [])
 % Evaluate controllability
 
 %% Create a stabilizing control
