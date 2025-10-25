@@ -131,7 +131,14 @@ disp(' ')
 
 % Explain why z is controllable in isolation from the other states
 % Build a T matrix for controllability decomposition
+v_T = orth(gamma);
+w_T = null(gamma');
+T = [v_T, w_T];
+T_inv = T^-1;
 
+% Calculate transform
+A_hat = T*A*T
+B_hat = T*B
 
 
 
