@@ -86,6 +86,12 @@ B = subs(df_du, [x, y, psi, omega, v, phi, phidot, u1, u2], [0, 0, 0, 0, 0, 0, 0
 gamma = ctrb(A, B);
 gamma_rank = rank(gamma);
 [n, ~] = size(A); 
+
+disp('Rank Gamma:')
+disp(gamma_rank)
+disp("n:")
+disp(n)   
+
 if gamma_rank == n
     disp('The system is completely controllable.');
 else
@@ -131,16 +137,34 @@ disp(' ')
 
 % Explain why z is controllable in isolation from the other states
 % Build a T matrix for controllability decomposition
-v_T = orth(gamma);
-w_T = null(gamma');
-T = [v_T, w_T];
-T_inv = T^-1;
+gamma = ctrb(A,B);
+Vc = orth(gamma);         % basis for controllable subspace
+Vuc = null(gamma');       % basis for uncontrollable subspace
+T = [Vc, Vuc];    
 
-% Calculate transform
-A_hat = T*A*T
-B_hat = T*B
+% Transform A and B
+A_hat = T \ A * T;
+B_hat = T \ B;
 
+disp('T =');
+disp(double(T));
 
+disp('A_hat =');
+disp(double(A_hat));
 
-%% Create a stabilizing control
+disp('B_hat =');
+disp(double(B_hat));
+% In the output, the uncontrollable state is state 7, which does not feed
+% upwards into the other states. This means that the other 6 states can be
+% controlled without influence from the uncontrollable direction. Since z
+% is completely controllable, this also proves that z can be controlled
+% independently of all other states, including the uncontrollable space. 
 
+%% Create a stabilizing control for z
+k = place(double(Az), double(Bz), [-1,-2,-3,-4]);
+disp('Control Law:')
+disp(k)
+
+Abar = double(Az) - double(Bz) * k;
+disp('Resulting Eigenvalues:')
+disp(eig(Abar))
