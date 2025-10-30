@@ -1,7 +1,7 @@
 function control_decomposition()
     control_design_system_1()
-    % control_design_system_2()
-    % control_design_system_3()
+    control_design_system_2()
+    control_design_system_3()
 
 end
 
@@ -28,8 +28,9 @@ end
 function control_design_system_1()
     % Get system
     [A, B] = get_system1();
+    disp('------------------------------------------------------------------')
     display("Create your controller for system 1");  
-    [n, m] = size(B)
+    [n, m] = size(B);
 
     % check controllability
     gamma = ctrb(A,B);
@@ -40,7 +41,7 @@ function control_design_system_1()
     % build transformations
     v = orth(gamma);
     w = null(gamma');
-    T = [v, w]; 
+    T = [v, w];
     A_hat = inv(T)*A*T;
     B_hat = inv(T)*B;
 
@@ -62,11 +63,27 @@ function control_design_system_1()
     disp('k1 hat:')
     disp(k1_hat)
 
+    % ensure the system is actually stable 
+    k_eig = eig(A11_hat - B1_hat * k1_hat);
+    disp('Stabilizable eigenvalues:')
+    disp(k_eig)
+    disp('All eigenvalues')
+    % disp(eig(A_hat-B_hat*k))
+
+    % build actual k and check system
+    k_hat = [k1_hat, zeros(m, n - gamma_rank)];
+    size(inv(T))
+    size(k_hat)
+    k = k_hat * inv(T); 
+    disp('Final eigenvalues')
+    disp(eig(A-B*k))
+
 end
 
 function control_design_system_2()
     % Get system
     [A, B] = get_system2();
+    disp('------------------------------------------------------------------')    
     display("Create your controller for system 2");  
     [n, m] = size(B);
 
@@ -79,7 +96,7 @@ function control_design_system_2()
     % build transformations
     v = orth(gamma);
     w = null(gamma');
-    T = [v, w]; 
+    T = [v, w];
     A_hat = inv(T)*A*T;
     B_hat = inv(T)*B;
 
@@ -88,27 +105,19 @@ function control_design_system_2()
     B1_hat = B_hat(1:gamma_rank, :);
 
     % check stabilizability
-    A22_hat = A_hat(n-gamma_rank+1:n, n-gamma_rank+1:n);
+    A22_hat = A_hat(gamma_rank+1:n, gamma_rank+1:n);
+    disp(A11_hat)
+    disp(B1_hat)    
     disp('A22 hat eigenvalues:')
     disp(eig(A22_hat))
+    disp('System is not stabilizable, uncontrollable eigenvalues > 0.')
 
-    % calculate control
-    [Q,R] = get_Q_R(A,B);
-    Q_hat = T'*Q*T;
-    Q11_hat = Q_hat(1:gamma_rank, 1:gamma_rank);
-
-    disp('Q hat:')
-    disp(eig(Q_hat))
-    k1_hat = lqr(A11_hat, B1_hat, Q11_hat, R);
-    disp('k1 hat:')
-    disp(k1_hat)
-
-    
 end
 
 function control_design_system_3()
     % Get system
     [A, B] = get_system3();
+    disp('------------------------------------------------------------------')    
     display("Create your controller for system 3");    
     [n, m] = size(B);
 
@@ -121,7 +130,7 @@ function control_design_system_3()
     % build transformations
     v = orth(gamma);
     w = null(gamma');
-    T = [v, w]; 
+    T = [v, w];
     A_hat = inv(T)*A*T;
     B_hat = inv(T)*B;
 
@@ -130,7 +139,7 @@ function control_design_system_3()
     B1_hat = B_hat(1:gamma_rank, :);
 
     % check stabilizability
-    A22_hat = A_hat(n-gamma_rank+1:n, n-gamma_rank+1:n);
+    A22_hat = A_hat(gamma_rank+1:n, gamma_rank+1:n);
     disp('A22 hat eigenvalues:')
     disp(eig(A22_hat))
 
@@ -139,11 +148,21 @@ function control_design_system_3()
     Q_hat = T'*Q*T;
     Q11_hat = Q_hat(1:gamma_rank, 1:gamma_rank);
 
-    disp('Q hat:')
-    disp(eig(Q_hat))
     k1_hat = lqr(A11_hat, B1_hat, Q11_hat, R);
     disp('k1 hat:')
     disp(k1_hat)
+
+    % ensure the system is actually stable 
+    k_eig = eig(A11_hat - B1_hat * k1_hat);
+    disp('Stabilizable eigenvalues:')
+    disp(k_eig)
+
+
+    % build actual k and check system
+    k_hat = [k1_hat, zeros(m, n - gamma_rank)];
+    k = k_hat * inv(T); 
+    disp('Final eigenvalues')
+    disp(eig(A-B*k))
 end
 
 
