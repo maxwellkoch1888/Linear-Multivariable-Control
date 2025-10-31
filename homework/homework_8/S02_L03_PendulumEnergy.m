@@ -4,15 +4,15 @@ close all;
     P.g = 9.8; % Gravity constant
     P.l = 0.25; % Pendulum length
     P.m = 1/9.8; % Pendulum mass
-    P.b = 1; % Friction coefficient
+    P.b = 0.01; % Friction coefficient
     P.x1_max = 0.5; 
     P.x2_max = 0.1; 
     P.u1_max = 0.5;
 
     % Simulate the state forward in time the state
-    x0 = [0.1; 0];
+    x0 = [pi-0.1; 0];
     dt = 0.01;
-    t = [0:dt:5];
+    t = [0:dt:20];
     [tmat, xmat] = ode45(@(t,x)f(t,x,@zeroControl, P), t, x0);
     tmat = tmat';
     xmat = xmat';
@@ -20,8 +20,11 @@ close all;
     % Calculate the energy
     len = length(tmat);
     E = zeros(1,len);
+    umat = zeros(1,len);
+
     for k = 1:len
         E(k) = calculateEnergy(xmat(:,k), P);
+        umat(k) = zeroControl(tmat(k),xmat(:,k),P);
     end
     
     %% Plot the results
@@ -38,10 +41,10 @@ close all;
     ylabel('$\dot{\theta}(t)$', 'fontsize', fontsize, 'Interpreter','latex');
     set(gca, 'fontsize', fontsize);
     
-    % Plot the energy
+    % Plot the torque
     subplot(3,1,3);
-    plot(tmat, E, 'r', 'linewidth', 3);
-    ylabel('Total Energy');
+    plot(tmat, umat, 'r', 'linewidth', 3);
+    ylabel('Torque');
     xlabel('time (sec)');
     set(gca, 'fontsize', fontsize);
     
@@ -79,7 +82,13 @@ function xdot = f(t,x, u_function, P)
 end
 
 function u = zeroControl(t, x, P)
-    u = 0;
+    [k,uff] = create_controller2();
+    dtheta = x(1) - pi/4;
+    dtheta = atan2(sin(dtheta), cos(dtheta));
+    u = uff - k*([dtheta; x(2)]);
+    
+    u = max(u,-1);
+    u = min(u,1);
 end
 
 function e = calculateEnergy(x, P)
@@ -112,4 +121,97 @@ function e = calculateEnergy(x, P)
     % Return total energy
     e = PE + KE;
 end
+
+function section_26_control_design()
+    % BUILD CONTROLLERS
+    create_controller1();
+    create_controller2();
+    create_controller3();
+end
+
+%% QUESTIONS
+% where does the feedforward term come from when the systems are already
+% linearized?
+% How do we access the functions in pendulum_energy?
+
+%% Functions 
+function [k,uff] = create_controller1()
+    % disp('Problem 2.3a')
+    % disp('------------------------------')
+
+    % GET A AND B
+    [A,B] = get_23a();
+    
+    % BUILD GAINS  
+    k = build_controller(A,B);
+    % disp('k:')
+    % disp(k)
+
+    % BUILD CONTROLLER
+    uff = 0;
+end
+
+function [k,uff] = create_controller2()
+    % disp('Problem 2.3c')
+    % disp('------------------------------')
+
+    g = 9.8 ;
+    m = 1/9.8;
+    l = 0.25; 
+    b = 0.01;
+
+    % GET A AND B
+    [A,B] = get_23c;
+    
+    % BUILD GAINS 
+    k = build_controller(A,B);
+    % disp('k:')
+    % disp(k)
+
+    % BUILD CONTROLLER
+    uff = -m*g*l*sin(pi/4);
+end 
+
+function k = build_controller(A,B)
+    [n,~] = size(B);
+
+    % BUILD GAMMA AND CHECK CONTROLLABILITY
+    gamma = [B, A*B];
+    gamma_rank = rank(gamma);
+    % if gamma_rank == n 
+    %     disp('System is completely controllable, rank of gamma = n.')
+    % else 
+    %     disp('System is not completely controllable, rank of gamma/= n.')
+    % end 
+
+    % BUILD Q AND R
+    Q = [1/0.5^2, 0; 0, 1/0.1^2];
+    R = [1/0.5^2];
+
+    % CALCULATE CONTROL INPUT
+    k = lqr(A,B,Q,R);
+
+end 
+
+function [A,B] = get_23a()
+    % DEFINE VALUES
+    g = 9.8 ;
+    m = 1/9.8;
+    l = 0.25; 
+    b = 0.01;
+
+    A = [0,1; g/l, -b/(m*l^2)];
+    B = [0; 1/(m*l^2)];
+end 
+
+function [A,B] = get_23c()
+    % DEFINE VALUES
+    g = 9.8 ;
+    m = 1/9.8;
+    l = 0.25; 
+    b = 0.01;
+
+    A = [0,1; g*sqrt(2)/(2*l), -b/(m*l^2)];
+    B = [0; 1/(m*l^2)];
+end 
 
