@@ -34,27 +34,27 @@ function create_controller()
     % PLOTS
     figure;
     subplot(5,1,1)
-    plot(t, x(:,1))
+    plot(t, x(:,1), 'linewidth',3)
     xlabel('Time (s)')
     ylabel('x')
 
     subplot(5,1,2)
-    plot(t, x(:,2))
+    plot(t, x(:,2), 'linewidth',3)
     xlabel('Time (s)')
     ylabel('x dot')
 
     subplot(5,1,3)
-    plot(t, x(:,3))
+    plot(t, x(:,3), 'linewidth',3)
     xlabel('Time (s)')
     ylabel('theta')
 
     subplot(5,1,4)
-    plot(t, x(:,4))
+    plot(t, x(:,4), 'linewidth',3)
     xlabel('Time (s)')
     ylabel('theta dot')
 
     subplot(5,1,5)
-    plot(t, u)
+    plot(t, u, 'linewidth',3)
     xlabel('Time (s)')
     ylabel('Control Input (u)')
 
