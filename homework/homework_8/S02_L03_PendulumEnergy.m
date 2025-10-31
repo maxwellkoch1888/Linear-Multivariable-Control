@@ -81,12 +81,18 @@ function xdot = f(t,x, u_function, P)
     xdot(2) = g/l*sin(theta) - b/(m*l^2)*thetadot + 1/(m*l^2)*T;
 end
 
-function u = zeroControl(t, x, P)
-    [k,uff] = create_controller2();
-    dtheta = x(1) - pi/4;
-    dtheta = atan2(sin(dtheta), cos(dtheta));
-    u = uff - k*([dtheta; x(2)]);
-    
+% function u = zeroControl(t, x, P)
+%     [k,uff] = create_controller2();
+%     dtheta = x(1) - pi/4;
+%     dtheta = atan2(sin(dtheta), cos(dtheta));
+%     u = uff - k*([dtheta; x(2)]);
+% 
+%     u = max(u,-1);
+%     u = min(u,1);
+% end
+function u = zeroControl(t,x,P)
+    [k, uff] = create_controller1();
+    u = uff - k*x
     u = max(u,-1);
     u = min(u,1);
 end
@@ -136,24 +142,24 @@ end
 
 %% Functions 
 function [k,uff] = create_controller1()
-    % disp('Problem 2.3a')
-    % disp('------------------------------')
+    disp('Problem 2.3a')
+    disp('------------------------------')
 
     % GET A AND B
     [A,B] = get_23a();
     
     % BUILD GAINS  
     k = build_controller(A,B);
-    % disp('k:')
-    % disp(k)
+    disp('k:')
+    disp(k)
 
     % BUILD CONTROLLER
     uff = 0;
 end
 
 function [k,uff] = create_controller2()
-    % disp('Problem 2.3c')
-    % disp('------------------------------')
+    disp('Problem 2.3c')
+    disp('------------------------------')
 
     g = 9.8 ;
     m = 1/9.8;
@@ -165,8 +171,8 @@ function [k,uff] = create_controller2()
     
     % BUILD GAINS 
     k = build_controller(A,B);
-    % disp('k:')
-    % disp(k)
+    disp('k:')
+    disp(k)
 
     % BUILD CONTROLLER
     uff = -m*g*l*sin(pi/4);
@@ -190,6 +196,10 @@ function k = build_controller(A,B)
 
     % CALCULATE CONTROL INPUT
     k = lqr(A,B,Q,R);
+
+    % EVALUATE SYSTEM STABILITY 
+    disp('Evaluate system stability:')
+    disp(eig(A-B*k))
 
 end 
 
