@@ -36,23 +36,46 @@ function create_controller()
 
     % PLOTS
     figure;
-    subplot(2,1,1)
+
+    subplot(5,1,1)
+    plot(t_lqr, x_lqr(:,1), 'b', 'LineWidth', 1.5)
+    hold on
+    plot(t_place, x_place(:,1), 'r--', 'LineWidth', 1.5)
+    xlabel('Time (s)')
+    ylabel('x')
+    legend('LQR', 'Pole Placement')
+
+    subplot(5,1,2)
+    plot(t_lqr, x_lqr(:,2), 'b', 'LineWidth', 1.5)
+    hold on
+    plot(t_place, x_place(:,2), 'r--', 'LineWidth', 1.5)
+    xlabel('Time (s)')
+    ylabel('x dot ')
+    legend('LQR', 'Pole Placement')
+
+    subplot(5,1,3)
     plot(t_lqr, x_lqr(:,3), 'b', 'LineWidth', 1.5)
     hold on
     plot(t_place, x_place(:,3), 'r--', 'LineWidth', 1.5)
     xlabel('Time (s)')
-    ylabel('\theta (rad)')
+    ylabel('theta')
     legend('LQR', 'Pole Placement')
-    title('Pendulum Angle Response')
-    
-    subplot(2,1,2)
+
+    subplot(5,1,4)
+    plot(t_lqr, x_lqr(:,4), 'b', 'LineWidth', 1.5)
+    hold on
+    plot(t_place, x_place(:,4), 'r--', 'LineWidth', 1.5)
+    xlabel('Time (s)')
+    ylabel('\theta dot')
+    legend('LQR', 'Pole Placement')
+
+    subplot(5,1,5)
     plot(t_lqr, u_lqr(1,:), 'b', 'LineWidth', 1.5)
     hold on
     plot(t_place, u_place(1,:), 'r--', 'LineWidth', 1.5)
     xlabel('Time (s)')
     ylabel('Control Input u (N)')
     legend('LQR', 'Pole Placement')
-    title('Control Input Comparison')
 end
 
 function [A,B,C,D] = get_dynamics()
