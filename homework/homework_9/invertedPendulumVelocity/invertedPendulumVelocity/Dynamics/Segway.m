@@ -65,8 +65,8 @@ classdef Segway < handle
 
             poles = [-5,-2,-3,-4];
             
-            % Place holder: zero control
-            K = place(obj.A,obj.B, poles);
+            % Build controller gain matrix
+            K = place(obj.A,obj.B, poles);            
         end
         
         function [u1, u2] = calculateFeedbackControl(obj, t, x)
@@ -81,9 +81,7 @@ classdef Segway < handle
 
             u_hat = obj.K * z;
 
-            % Placeholder: zero control
-            u1 = 0;
-            u2 = 0;
+            % Build controls
             u = u_hat + uff;
             u1 = u(2);
             u2 = u(2);
@@ -97,8 +95,13 @@ classdef Segway < handle
             %assuming that the states is given by [omega; v; phi; phidot]
             %with the linearized system matrices (A,B)            
             
-            % Place holder: zero update
-            L = zeros(3,4);
+            % Define poles
+            poles = [-100,-40,-60,-80];
+            
+            % Create the luenberger observer gain matrix
+            L = place(obj.A', obj.C', poles);
+            L = L';
+
         end
         
         function xhat_dot = observerDynamics(obj, xhat, u, y)
@@ -106,8 +109,18 @@ classdef Segway < handle
             %the state defined by [omega; v; phi; phidot] given the output,
             %the current estimate, and the input
             
+            % Define the L matrix
+            L_mat = createObserverGains(obj);
+
             % Place holder: zero update
-            xhat_dot = zeros(4,1);
+            % disp(obj.A)
+            % disp(xhat)
+            % disp(obj.B)
+            % disp(u)
+            % disp(L_mat)
+            % disp(y)
+            % disp(obj.C)
+            xhat_dot = obj.A*xhat + obj.B*u + L_mat*(y-obj.C*xhat);
         end
         
     end
