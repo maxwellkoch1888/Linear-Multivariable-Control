@@ -5,7 +5,7 @@ A = [0,1;-2,-3];
 B = [0;1];
 n = 2;
 
-% BUILD Q AND R MATRICES
+% BUILD Q, R, S MATRICES
 Q = [1,0;0,0];
 R = 1;
 S = [1,0;0,1];
@@ -60,19 +60,17 @@ function [p_num, t_num] = numeric(A, B, Q, R, S, T, dt, t0)
 
     % BUILD p_num AND t_num
     p_num = [P11_values; P12_values; P21_values; P22_values];
-    t_num = flip(t_num);
-    p_num = flip(p_num);
 end 
 
 % CALCULATE THE ODE45 SOLULTION TO THE RICATTI EQN
 function [p_ode, t_ode] = ode(A, B, Q, R, S, T, dt, t0)
     % SIMULATE WITH ODE45
-    [t_vec,p_mat] = ode45(@(t,p_vec) DRE(t, p_vec, A, B, Q, R), [T:-dt:t0], S(:) );
+    [t_ode,p_mat] = ode45(@(t,p_vec) DRE(t, p_vec, A, B, Q, R), [T:-dt:t0], S(:) );
     
     % TRANSPOSE P AND FLIP T TO MATCH DIMENSIONS
     p_ode = p_mat';
-    p_ode = flip(p_ode);
-    t_ode = flip(t_vec);
+    % p_ode = flip(p_ode);
+    % t_ode = flip(t_ode);
 end
 
 % DIFFERENTIAL RICCATI EQN FOR ODE
