@@ -35,12 +35,12 @@ f = @(t,x) Acl * x;
 % PLOT STATES
 figure;
 subplot(4,1,1)
-plot(t, x(:,1)), ylabel('x_1'), grid on
+plot(t, x(:,1)), ylabel('x_1', LineWidth=1.5), grid on
 subplot(4,1,2)
-plot(t, x(:,2)), ylabel('x_2'), grid on
+plot(t, x(:,2)), ylabel('x_2', LineWidth=1.5), grid on
 subplot(4,1,3)
-plot(t, x(:,3)), ylabel('x_3'), grid on
+plot(t, x(:,3)), ylabel('x_3', LineWidth=1.5), grid on
 subplot(4,1,4)
-plot(t, x(:,4)), ylabel('x_4'), grid on
+plot(t, x(:,4)), ylabel('x_4', LineWidth=1.5), grid on
 xlabel('Time (s)')
 sgtitle('Closed Loop State Response')

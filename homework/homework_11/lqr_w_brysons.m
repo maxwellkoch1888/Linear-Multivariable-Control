@@ -1,4 +1,5 @@
 %% INITIALIZE THE SYSTEM
+close all
 % DEFINE STATE MATRICES
 A = [3,6,4;9,6,10;-7,-7,-9];
 B = [-2/3, 1/3; 1/3, -2/3; 1/3, 1/3];
@@ -6,7 +7,7 @@ x0 = [5;3;2];
 
 % BUILD Q, R, S MATRICES
 xmax = [1/1, 1/100^2, 1/100^2];
-umax = [1/25, 1/100];
+umax = [1/5, 1/100];
 xmax_terminal = [1/100, 1/1, 1/4];
 Q = diag(xmax);
 R = diag(umax);
@@ -45,11 +46,9 @@ function [t_num, p_num] = numeric(A, B, Q, R, S, tf, dt, t0)
     % BUILD VALUES OF X AND Y
     X     = eye(3);
     Y     = S;
-    X_dot = A*X - B*R*B'*Y;
-    Y_dot = -Q*X - A'*Y;
     
     % CALCULATE THE M MATRIX
-    M = [A, -B*R*B'; -Q, -A'];
+    M = [A, -B*inv(R)*B'; -Q, -A'];
     
     % EULER INTEGRATION
     P11_values = [];
@@ -88,7 +87,6 @@ function [t_num, p_num] = numeric(A, B, Q, R, S, tf, dt, t0)
     p_num = [P11_values; P12_values; P13_values; ...
              P21_values; P22_values; P23_values; ...
              P31_values; P32_values; P33_values];
-    t_num = flip(t_num);
 end 
 
 % SOLVE RICATTI EQN USING ODE45
@@ -121,8 +119,6 @@ end
 function [t_vec, x_mat] = euler_dynamics(A, B, Q, R, S, tf, dt, t0, x0)
     % Get numeric Riccati solution backward in time
     [t_vec, p_mat] = numeric(A, B, Q, R, S, tf, dt, t0);
-
-    t_vec = flip(t_vec);
 
     N = length(t_vec);
     n = length(x0);

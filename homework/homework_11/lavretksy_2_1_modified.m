@@ -33,7 +33,7 @@ function [p_num, t_num] = numeric(A, B, Q, R, S, T, dt, t0)
     Y     = S;
     
     % CALCULATE THE M MATRIX
-    M = [A, -B*R*B'; -Q, -A'];
+    M = [A, -B*inv(R)*B'; -Q, -A'];
     
     % EULER INTEGRATION
     P11_values = [];
