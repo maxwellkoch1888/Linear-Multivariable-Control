@@ -10,15 +10,15 @@ B = [10.1,   0; ...
 x0 = [10; 0.1; 0.1; 0.0];
 
 % DEFINE Q AND R MATRICES
-Q = diag([1, 100, 500, 500]);
-R = diag([0.1, 1.0]);
+Q = diag([1, 100, 500, 500])
+R = diag([0.1, 1.0])
 
 % CHECK CONTROLLABILITY
 gamma = ctrb(A,B);
 % disp(rank(gamma))
 
 % BUILD GAIN MATRIX
-K = lqr(A,B,Q,R);
+K = lqr(A,B,Q,R)
 
 % BUILD CLOSED LOOP SYSTEM
 Acl = A - B*K;
@@ -35,12 +35,20 @@ f = @(t,x) Acl * x;
 % PLOT STATES
 figure;
 subplot(4,1,1)
-plot(t, x(:,1)), ylabel('x_1', LineWidth=1.5), grid on
+plot(t, x(:,1), 'b', LineWidth=1.5)
+ylabel('x_1')
+
 subplot(4,1,2)
-plot(t, x(:,2)), ylabel('x_2', LineWidth=1.5), grid on
+plot(t, x(:,2), 'b', LineWidth=1.5)
+ylabel('x_2')
+
 subplot(4,1,3)
-plot(t, x(:,3)), ylabel('x_3', LineWidth=1.5), grid on
+plot(t, x(:,3), 'b', LineWidth=1.5)
+ylabel('x_3')
+
 subplot(4,1,4)
-plot(t, x(:,4)), ylabel('x_4', LineWidth=1.5), grid on
+plot(t, x(:,4), 'b', LineWidth=1.5)
+ylabel('x_4')
+
 xlabel('Time (s)')
 sgtitle('Closed Loop State Response')

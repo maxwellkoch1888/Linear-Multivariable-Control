@@ -110,6 +110,7 @@ function [t_vec, x_mat] = euler_dynamics(A, B, Q, R, S, T, dt, t0, x0)
     end
 end
 
+% USE ODE45 TO SIMULATE DYNAMICS
 function [t_sol, x_sol] = ode45_dynamics(A, B, Q, R, S, T, x0)
 
     n = size(A,1);
