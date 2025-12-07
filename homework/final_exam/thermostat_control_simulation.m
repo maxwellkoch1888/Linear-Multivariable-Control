@@ -6,13 +6,37 @@ function thermostat_control_simulation()
     [A, B, C, E] = get_system();
         
     %% Control Design
-    x_d = [0.; 0.; 20.; 0.; 0.]; % This is definitely not correct
-    gamma = ctrb(A, B);
-    % disp('Gamma:')
-    % disp(gamma)
+    % SOLVE FOR u_ff AND x_d, UNDERDEFINED SYSTEM
+    syms xd2 xd4 xd5 u_ff1 u_ff2
+    x_d  = [20.0; xd2; 20.0; xd4; xd5]; % x_d1 = 20.0 to add a constraint
+    u_ff = [u_ff1; u_ff2];
+    d    = 10.0;
+
+    eqn       = A*x_d + B*u_ff + E*d == 0.0; 
+    variables = [xd2, xd4, xd5, u_ff1, u_ff2];
+    vars      = solve(eqn, variables);
+
+    x_d  = [20.0; vars.xd2; 20.0; vars.xd4; vars.xd5];
+    u_ff = [vars.u_ff1; vars.u_ff2];
+
+    % BUILD AUGMENTED SYSTEM
+    C1 = [0, 0, 0, 1, 0]; 
+    A_aug = [A, zeros(5,2); C1, 0, 0; zeros(1,5), 1, 0];
+    B_aug = [B; zeros(2,2)];
+    E_aug = [E; zeros(2,1)];
+
+    % CHECK CONTROLLABILITY
+    gamma      = ctrb(A_aug,B_aug);
     rank_gamma = rank(gamma);
-    disp('Rank Gamma:')
-    disp(rank_gamma)
+    % disp('Rank Gamma:')
+    % disp(rank_gamma) % rank = 5, completely controllable
+
+    % BUILD Q AND R MATRICES
+    Q = diag([0, 0, 1, 0, 0, 1/(20^2), 1/(20^2)]);
+    R = diag([1/(0.5^2), 1/(0.5^2)]);
+
+    % CALCULATE GAINS 
+    K_aug = lqr(A_aug, B_aug, Q, R);    
 
     %% Create the observer (Create the observer)
     
@@ -26,12 +50,19 @@ function thermostat_control_simulation()
     P.n_ctrl = 2;
     P.ctrl_max = 100;    
     
+    % ADD ADDITIONAL VARIABLES FOR CONTROLLER TO STRUCT
+    P.u_ff = u_ff;
+    P.x_d  = x_d; 
+    P.x_d4 = x_d(4);
+    P.x_int_index = 4; 
+    P.K_aug = K_aug;
+
 
     %% Simulate the system (Don't change anything in this section except x0_ctrl)
     % Create the initial state
     x0_sys = [20.5; 19.; 19.; 11.; 21];
     x0_obs = [15; 15; 15; 15; 15];
-    x0_ctrl = []; % Any additional states added for control -> initialize each to zero
+    x0_ctrl = [0; 0]; % Any additional states added for control -> initialize each to zero
     x0 = [x0_sys; x0_obs; x0_ctrl];
 
     % Simulate the system throughout the entire day (86400 seconds)
@@ -110,7 +141,16 @@ function xdot = dynamics(t, x, P)
     x_obs_dot = zeros(size(x_obs));
 
     % Control dynamics (definitely fix this line)
-    x_ctrl_dot = zeros(size(x_ctrl));
+    x_4 = x_sys(P.x_int_index); 
+    error = P.x_d4 - x_4; 
+
+    sigma1 = x_ctrl(1); 
+    sigma2 = x_ctrl(2); 
+
+    sigma1_dot = error; 
+    sigma2_dot = sigma1; 
+
+    x_ctrl_dot = [sigma1_dot; sigma2_dot];
 
     xdot = [x_sys_dot; x_obs_dot; x_ctrl_dot];
 end
@@ -127,8 +167,12 @@ function u = control(x_obs, x_ctrl, P)
     %   u: The resulting control
 
     % Create the feedback control (you'll want to change this)
-    % u_ff = 
-    u = zeros(P.n_ctrl,1);
+    u_ff  = P.u_ff;
+
+    K_dyn = P.K_aug(:,1:5);
+    K_int = P.K_aug(:,6:7);
+
+    u = -K_dyn*x_obs -K_int*x_ctrl + u_ff;
 
     % Bound the control (leave the following two lines alone)
     u = max(u, -P.ctrl_max);
