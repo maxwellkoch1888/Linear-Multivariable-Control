@@ -63,18 +63,19 @@ disp('-------------------------------------------------')
 
 % z = x - x_d;
 
-% FIND u_ff TERM 
-syms u_ff1 u_ff2 u_ff3 u_ff4
-u_ff = [u_ff1; u_ff2; u_ff3; u_ff4];
+% FIND uff TERM 
+syms uff1 uff2 uff3 uff4
+u_ff = [uff1; uff2; uff3; uff4];
 
-variables = [u_ff1, u_ff2, u_ff3, u_ff4];
+variables = [uff1, uff2, uff3, uff4];
 eqn = A*x_d + B* u_ff == 0.0;
 
 vars = solve(eqn, variables);
-u_ff = [vars.u_ff1; vars.u_ff2; vars.u_ff3; vars.u_ff4];
+uff_sym = [vars.uff1; vars.uff2; vars.uff3; vars.uff4];
+uff = double(uff_sym);
 
 % WRITE FULL CONTROL
-% u = u_hat + u_ff 
+% u = u_hat + uff 
 
 % TEST CONTROLLABILITY/STABILIZABILITY
 A_list = {A}; 
@@ -103,6 +104,9 @@ K = Khat * inv(T_c);
 % RESULTING CLOSED LOOP EIGENVALUES 
 disp('Closed loop eigenvalues:')
 disp(eig(A - B * K)) % makes sense, uncontrollable portion has eigenvalues of -2, -2
+
+% SAVE ANSWERS AS A .mat FILE
+save("prob2b.mat", "uff", "K")
 
 %% OBSERVER DESIGN
 disp('Observer Design')
@@ -133,6 +137,8 @@ disp(eig(A - L* C)) % resulting eigenvalues 1,-1,-1,-2,-2,-3,-4.
 %  Makes sense, unobservable eigenvalues are 1,-1,-2 and commanded
 %  eigenvalues are -1,-2,-3,-4. 
 
+% SAVE ANSWERS AS A .mat FILE
+save("prob2c.mat", "L")
 
 %% FUNCTIONS 
 % GET SYSTEM MATRICES 
