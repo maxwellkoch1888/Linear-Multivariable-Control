@@ -31,26 +31,21 @@ function thermostat_control_simulation()
     B_aug = [B; zeros(2,2)];
 
     % CHECK CONTROLLABILITY
-    gamma      = ctrb(A_aug,B_aug);
+    gamma      = ctrb(A,B);
     rank_gamma = rank(gamma);
     % disp('Rank Gamma:')
     % disp(rank_gamma) % rank = 7, completely controllable
 
     % BUILD Q AND R MATRICES
-    Q = diag([0, 0, 1, 0, 0, 1/(20^2), 1/(20^2)]);
-    % Q = diag([0, 0, 1, 0, 0]);
+    Q = diag([0, 0, 1, 0, 0]);
     
     R = diag([1/(0.5^2), 1/(0.5^2)]);
 
     % CALCULATE GAINS 
-    K_aug = lqr(A_aug, B_aug, Q, R);
-    Kx = K_aug(1:2,1:5);
-    Ki = K_aug(1:2,6:7);
-    % Kx = lqr(A,B,Q,R);
-    % Ki = zeros(2,2);    
+    K = lqr(A,B,Q,R);
 
     % disp('Closed Loop Eigenvalues:')
-    % disp(eig(A-B*Kx))
+    % disp(eig(A-B*K))
 
     %% Create the observer (Create the observer)
     omega = obsv(A,C);
@@ -76,8 +71,7 @@ function thermostat_control_simulation()
 
     % ADDED VALUES
     P.uff = u_ff;
-    P.Kx = Kx;
-    P.Ki = Ki;
+    P.K = K;
     P.x_d = x_d;
     P.d_nom = 10; % from problem statement, assume d=10
     P.L = L;
@@ -87,7 +81,7 @@ function thermostat_control_simulation()
     % Create the initial state
     x0_sys = [20.5; 19.; 19.; 11.; 21];
     x0_obs = [15; 15; 15; 15; 15];
-    x0_ctrl = [0; 0]; % Any additional states added for control -> initialize each to zero
+    x0_ctrl = []; % Any additional states added for control -> initialize each to zero
     x0 = [x0_sys; x0_obs; x0_ctrl];
 
     % Simulate the system throughout the entire day (86400 seconds)
@@ -115,17 +109,7 @@ function thermostat_control_simulation()
     sgtitle("States vs Time")    
 
     % Plot other things vs time
-    %% Plot state errors over time
-    figure;
-    for k = 1:5
-        subplot(5,1,k);
-        e_k = x_mat(k,:) - x_d(k);   % system state error
-        plot(tvec/3600, e_k, 'b');
-        ylabel(["e_", num2str(k)]);
-        grid on;
-    end
-    xlabel("Time (hr)");
-    sgtitle("State Errors vs Time");
+
 end
 
 function [A, B, C, E] = get_system()
@@ -176,10 +160,7 @@ function xdot = dynamics(t, x, P)
     x_obs_dot = P.A*x_obs + P.B*u + P.E*P.d_nom + P.L*(P.C*x_sys - P.C*x_obs);
 
     % Control dynamics (definitely fix this line)
-    e = x_obs - P.x_d;     % state error
-
-    x_ctrl_dot = [ e(3) ;     % integrate the error
-                   x_ctrl(1)];  % integrate the first integrator
+    x_ctrl_dot = [];
 
     xdot = [x_sys_dot; x_obs_dot; x_ctrl_dot];
 end
@@ -197,9 +178,7 @@ function u = control(x_obs, x_ctrl, P)
 
     % Create the feedback control (you'll want to change this)
     e_x = x_obs - P.x_d;   % 5 states
-    sigma = x_ctrl;        % 2 integrator states
-    
-    u = -P.Kx * e_x - P.Ki * sigma + P.uff;
+    u = -P.K * e_x  + P.uff;    
 
     % Bound the control (leave the following two lines alone)
     u = max(u, -P.ctrl_max);

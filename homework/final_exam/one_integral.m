@@ -27,28 +27,25 @@ function thermostat_control_simulation()
 
     % BUILD AUGMENTED SYSTEM
     C1 = [0, 0, 1, 0, 0]; % we only care about state 3
-    A_aug = [A, zeros(5,2); C1, 0, 0; zeros(1,5), 1, 0];
-    B_aug = [B; zeros(2,2)];
+    A_aug = [A, zeros(5,1); C1, 0];
+    B_aug = [B; zeros(1,2)];
 
     % CHECK CONTROLLABILITY
-    gamma      = ctrb(A_aug,B_aug);
+    gamma      = ctrb(A,B);
     rank_gamma = rank(gamma);
     % disp('Rank Gamma:')
     % disp(rank_gamma) % rank = 7, completely controllable
 
     % BUILD Q AND R MATRICES
-    Q = diag([0, 0, 1, 0, 0, 1/(20^2), 1/(20^2)]);
-    % Q = diag([0, 0, 1, 0, 0]);
+    Q = diag([0, 0, 1, 0, 0, 1/(20^2)]);
     
     R = diag([1/(0.5^2), 1/(0.5^2)]);
 
     % CALCULATE GAINS 
     K_aug = lqr(A_aug, B_aug, Q, R);
     Kx = K_aug(1:2,1:5);
-    Ki = K_aug(1:2,6:7);
-    % Kx = lqr(A,B,Q,R);
-    % Ki = zeros(2,2);    
-
+    Ki = K_aug(1:2,6);
+  
     % disp('Closed Loop Eigenvalues:')
     % disp(eig(A-B*Kx))
 
@@ -87,7 +84,7 @@ function thermostat_control_simulation()
     % Create the initial state
     x0_sys = [20.5; 19.; 19.; 11.; 21];
     x0_obs = [15; 15; 15; 15; 15];
-    x0_ctrl = [0; 0]; % Any additional states added for control -> initialize each to zero
+    x0_ctrl = [0]; % Any additional states added for control -> initialize each to zero
     x0 = [x0_sys; x0_obs; x0_ctrl];
 
     % Simulate the system throughout the entire day (86400 seconds)
@@ -178,8 +175,7 @@ function xdot = dynamics(t, x, P)
     % Control dynamics (definitely fix this line)
     e = x_obs - P.x_d;     % state error
 
-    x_ctrl_dot = [ e(3) ;     % integrate the error
-                   x_ctrl(1)];  % integrate the first integrator
+    x_ctrl_dot = [e(3)];     % integrate the error
 
     xdot = [x_sys_dot; x_obs_dot; x_ctrl_dot];
 end
@@ -197,8 +193,8 @@ function u = control(x_obs, x_ctrl, P)
 
     % Create the feedback control (you'll want to change this)
     e_x = x_obs - P.x_d;   % 5 states
-    sigma = x_ctrl;        % 2 integrator states
-    
+    sigma = x_ctrl;        % integrator state
+
     u = -P.Kx * e_x - P.Ki * sigma + P.uff;
 
     % Bound the control (leave the following two lines alone)

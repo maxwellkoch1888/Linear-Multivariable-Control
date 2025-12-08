@@ -26,7 +26,7 @@ function thermostat_control_simulation()
     % disp(A*x_d + B*u_ff + E*d) % Should be very close to zero
 
     % BUILD AUGMENTED SYSTEM
-    C1 = [0, 0, 1, 0, 0]; % we only care about state 3
+    C1 = [0, 0, 0, 1, 0]; % try integrating state 4
     A_aug = [A, zeros(5,2); C1, 0, 0; zeros(1,5), 1, 0];
     B_aug = [B; zeros(2,2)];
 
@@ -38,7 +38,6 @@ function thermostat_control_simulation()
 
     % BUILD Q AND R MATRICES
     Q = diag([0, 0, 1, 0, 0, 1/(20^2), 1/(20^2)]);
-    % Q = diag([0, 0, 1, 0, 0]);
     
     R = diag([1/(0.5^2), 1/(0.5^2)]);
 
@@ -46,8 +45,7 @@ function thermostat_control_simulation()
     K_aug = lqr(A_aug, B_aug, Q, R);
     Kx = K_aug(1:2,1:5);
     Ki = K_aug(1:2,6:7);
-    % Kx = lqr(A,B,Q,R);
-    % Ki = zeros(2,2);    
+  
 
     % disp('Closed Loop Eigenvalues:')
     % disp(eig(A-B*Kx))
@@ -98,7 +96,6 @@ function thermostat_control_simulation()
     % Get the control and disturbance over time
     u_mat = get_all_control(x_mat, P);
     d_vec = get_all_disturbances(tvec);
-    
 
     %% Plot the results
     % Plot the states over time
@@ -178,7 +175,7 @@ function xdot = dynamics(t, x, P)
     % Control dynamics (definitely fix this line)
     e = x_obs - P.x_d;     % state error
 
-    x_ctrl_dot = [ e(3) ;     % integrate the error
+    x_ctrl_dot = [ e(4) ;     % integrate the error
                    x_ctrl(1)];  % integrate the first integrator
 
     xdot = [x_sys_dot; x_obs_dot; x_ctrl_dot];
