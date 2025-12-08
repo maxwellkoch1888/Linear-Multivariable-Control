@@ -19,27 +19,44 @@ function thermostat_control_simulation()
     x_d  = [20.0; vars.xd2; 20.0; vars.xd4; vars.xd5];
     u_ff = [vars.u_ff1; vars.u_ff2];
 
+    x_d = double(x_d);
+    u_ff = double(u_ff);
+
     % BUILD AUGMENTED SYSTEM
-    C1 = [0, 0, 0, 1, 0]; 
+    C1 = [0, 0, 1, 0, 0]; 
     A_aug = [A, zeros(5,2); C1, 0, 0; zeros(1,5), 1, 0];
     B_aug = [B; zeros(2,2)];
-    E_aug = [E; zeros(2,1)];
 
     % CHECK CONTROLLABILITY
     gamma      = ctrb(A_aug,B_aug);
     rank_gamma = rank(gamma);
     % disp('Rank Gamma:')
-    % disp(rank_gamma) % rank = 5, completely controllable
+    % disp(rank_gamma) % rank = 7, completely controllable
 
     % BUILD Q AND R MATRICES
     Q = diag([0, 0, 1, 0, 0, 1/(20^2), 1/(20^2)]);
     R = diag([1/(0.5^2), 1/(0.5^2)]);
 
     % CALCULATE GAINS 
-    K_aug = lqr(A_aug, B_aug, Q, R);    
+    K_aug = lqr(A_aug, B_aug, Q, R);
+    Kx = K_aug(1:2,1:5);
+    Ki = K_aug(1:2,6:7);
+
+    % disp('Closed Loop Eigenvalues:')
+    % disp(eig(A-B*Kx))
 
     %% Create the observer (Create the observer)
-    
+    omega = obsv(A,C);
+    % disp('Rank omega:')
+    % disp(rank(omega)) % rank = 5, completely observable
+
+    Q = diag([10,10,10,10,10]);
+    R = 1;
+
+    L = lqr(A', C', Q, R)';
+
+    % disp('Observer poles:')
+    % disp(eig(A-L*C))
     
     %% Store the values (Feel free to add any additional values here to pass into the control or dynamics functions)
     P.A = A;
@@ -49,14 +66,15 @@ function thermostat_control_simulation()
     P.n_states = 5;
     P.n_ctrl = 2;
     P.ctrl_max = 100;    
-    
-    % ADD ADDITIONAL VARIABLES FOR CONTROLLER TO STRUCT
-    P.u_ff = u_ff;
-    P.x_d  = x_d; 
-    P.x_d4 = x_d(4);
-    P.x_int_index = 4; 
-    P.K_aug = K_aug;
 
+    % ADDED VALUES
+    P.uff = u_ff;
+    P.Kx = Kx;
+    P.Ki = Ki;
+    P.x_d = x_d;
+    P.d_nom = 10; % from problem statement, assume d=10
+    P.L = L;
+    
 
     %% Simulate the system (Don't change anything in this section except x0_ctrl)
     % Create the initial state
@@ -138,19 +156,14 @@ function xdot = dynamics(t, x, P)
     x_sys_dot = P.A*x_sys + P.B*u + P.E*disturbance(t);
 
     % Observer dynamics (this line should use P.d_nom instead of disturbance(t))
-    x_obs_dot = zeros(size(x_obs));
+    x_obs_dot = P.A*x_obs + P.B*u + P.E*P.d_nom + P.L*(P.C*x_sys - P.C*x_obs);
 
     % Control dynamics (definitely fix this line)
-    x_4 = x_sys(P.x_int_index); 
-    error = P.x_d4 - x_4; 
+    e = x_obs - P.x_d;     % state error
 
-    sigma1 = x_ctrl(1); 
-    sigma2 = x_ctrl(2); 
-
-    sigma1_dot = error; 
-    sigma2_dot = sigma1; 
-
-    x_ctrl_dot = [sigma1_dot; sigma2_dot];
+    x_ctrl_dot = [ e(3) ;     % integrate the error
+                   x_ctrl(1)  % integrate the first integrator
+                 ];
 
     xdot = [x_sys_dot; x_obs_dot; x_ctrl_dot];
 end
@@ -167,12 +180,10 @@ function u = control(x_obs, x_ctrl, P)
     %   u: The resulting control
 
     % Create the feedback control (you'll want to change this)
-    u_ff  = P.u_ff;
-
-    K_dyn = P.K_aug(:,1:5);
-    K_int = P.K_aug(:,6:7);
-
-    u = -K_dyn*x_obs -K_int*x_ctrl + u_ff;
+    e_x = x_obs - P.x_d;   % 5 states
+    sigma = x_ctrl;          % 2 integrator states
+    
+    u = -P.Kx * e_x - P.Ki * sigma + P.uff;
 
     % Bound the control (leave the following two lines alone)
     u = max(u, -P.ctrl_max);
