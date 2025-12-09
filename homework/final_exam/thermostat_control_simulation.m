@@ -64,7 +64,7 @@ function thermostat_control_simulation()
     K = K_aug; 
 
     % disp('Closed Loop Eigenvalues:')
-    % disp(eig(A-B*Kx))
+    % disp(eig(A_aug-B_aug*K_aug))
 
     %% Create the observer (Create the observer)
     omega = obsv(A,C);
