@@ -7,23 +7,35 @@ function thermostat_control_simulation()
         
     %% Control Design
     % SOLVE FOR u_ff AND x_d, UNDERDEFINED SYSTEM
-    syms xd2 xd4 xd5 u_ff1 u_ff2
-    x_d  = [20.0; xd2; 20.0; xd4; xd5]; % x_d1 = 20.0 to add a constraint
-    u_ff = [u_ff1; u_ff2];
-    d    = 10.0;
+    d_nom = 10;
 
-    eqn       = A*x_d + B*u_ff + E*d == 0.0; 
-    variables = [xd2, xd4, xd5, u_ff1, u_ff2];
-    vars      = solve(eqn, variables);
-
-    x_d  = [20.0; vars.xd2; 20.0; vars.xd4; vars.xd5];
-    u_ff = [vars.u_ff1; vars.u_ff2];
-
-    x_d = double(x_d);
-    u_ff = double(u_ff);
+    % MAKE x3 = 20
+    % x_d = [x1;x2;20;x4;x5]
+    % uff = [uff1;uff2]
+    % UNKNOWN VECTOR vars = [x1;x2;x4;x5;u1;u2]
+    
+    % Build the reduced system: A*x_d + B*uff = b
+    A1 = A(:,[1 2 4 5]);   % columns of x except the fixed x3
+    A3 = A(:,3)*20;        % contribution of fixed x3
+    
+    M = [A1 B];            % matrix multiplying [x1;x2;x4;x5;u1;u2]
+    rhs = -E*d_nom - A3;
+    
+    % Minimum-norm solution
+    vars = pinv(M)*rhs;
+    
+    x1 = vars(1);
+    x2 = vars(2);
+    x4 = vars(3);
+    x5 = vars(4);
+    uff1 = vars(5);
+    uff2 = vars(6);
+    
+    x_d = [x1; x2; 20; x4; x5];
+    u_ff = [uff1; uff2];
 
     % MAKE SURE uff AND x_d are correct
-    % disp(A*x_d + B*u_ff + E*d) % Should be very close to zero
+    % disp(A*x_d + B*u_ff + E*d_nom) % Should be very close to zero
 
     % BUILD AUGMENTED SYSTEM
     C1 = [0, 0, 0, 1, 0]; % try integrating state 4
