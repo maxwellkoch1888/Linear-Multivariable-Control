@@ -37,8 +37,8 @@ min_sys = simplify(Chat  / (s*eye(3) - Ahat) * Bhat + Dhat);
 Omega = logspace(-3,3,200);
 
 % Frequency response of TF difference
-G_full = ss(A,B,C,D);
-G_min  = ss(Ahat,Bhat,Chat,Dhat);
+G_full = ss(A,B,C,D); % original system
+G_min  = ss(Ahat,Bhat,Chat,Dhat); % minimal realization
 Gdiff = freqresp(G_full - G_min, Omega);   % size: [ny, nu, N]
 
 % Compute infinity norm: max over frequencies of induced 2-norm
@@ -46,7 +46,7 @@ norm_vals = zeros(1, length(Omega));
 
 for k = 1:length(Omega)
     Gk = squeeze(Gdiff(:,:,k));   % convert ny x nu x 1 into ny x nu
-    norm_vals(k) = norm(Gk, 2);   % induced 2-norm at this freq
+    norm_vals(k) = norm(Gk, 2);   % induced 2-norm at frequency
 end
 
 norm_diff = max(norm_vals);

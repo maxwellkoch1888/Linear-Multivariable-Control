@@ -63,8 +63,8 @@ function thermostat_control_simulation()
     Ki = K_aug(1:2,6:7);
     K = K_aug; 
 
-    disp('Closed Loop Eigenvalues:')
-    disp(eig(A-B*Kx))
+    % disp('Closed Loop Eigenvalues:')
+    % disp(eig(A-B*Kx))
 
     %% Create the observer (Create the observer)
     omega = obsv(A,C);
@@ -75,8 +75,8 @@ function thermostat_control_simulation()
     R = 1;
     L = lqr(A', C', Q, R)';
 
-    disp('Observer poles:')
-    disp(eig(A-L*C))
+    % disp('Observer poles:')
+    % disp(eig(A-L*C))
 
     %% SAVE .mat FILE 
     save("prob1.mat", "L", "K", "x_d")
@@ -130,8 +130,7 @@ function thermostat_control_simulation()
     xlabel("Time (hr)")
     sgtitle("States vs Time")    
 
-    % Plot other things vs time
-    %% Plot state errors over time
+    % Plot state errors over time
     figure;
     for k = 1:5
         subplot(5,1,k);
@@ -142,6 +141,29 @@ function thermostat_control_simulation()
     end
     xlabel("Time (hr)");
     sgtitle("State Errors vs Time");
+
+    % Plot control inputs u1 and u2 over time
+    figure;
+    subplot(2,1,1);
+    plot(tvec/3600, u_mat(1,:), 'b', LineWidth=1.5);
+    ylabel("u_1");
+    grid on;
+
+    subplot(2,1,2);
+    plot(tvec/3600, u_mat(2,:), 'b', LineWidth=1.5);
+    ylabel("u_2");
+    xlabel("Time (hr)");
+    grid on;
+    sgtitle("Control Inputs vs Time");
+
+
+    % Plot disturbance over time
+    figure;
+    plot(tvec/3600, d_vec, 'b', LineWidth=1.5);
+    xlabel("Time (hr)");
+    ylabel("Disturbance d(t)");
+    grid on;
+    title("Disturbance vs Time");
 end
 
 function [A, B, C, E] = get_system()
