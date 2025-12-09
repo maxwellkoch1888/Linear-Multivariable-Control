@@ -50,7 +50,10 @@ function thermostat_control_simulation()
 
     % BUILD Q AND R MATRICES
     Q = diag([0, 0, 1, 0, 0, 1/(20^2), 1/(20^2)]);
-    % Q = diag([0, 0, 1, 0, 0]);
+
+    Cc = [0,0,1,0,0,1/20, 1/20];
+    omega_int = obsv(A_aug,Cc);
+    % rank(omega_int)
     
     R = diag([1/(0.5^2), 1/(0.5^2)]);
 
@@ -60,8 +63,8 @@ function thermostat_control_simulation()
     Ki = K_aug(1:2,6:7);
     K = K_aug; 
 
-    % disp('Closed Loop Eigenvalues:')
-    % disp(eig(A-B*Kx))
+    disp('Closed Loop Eigenvalues:')
+    disp(eig(A-B*Kx))
 
     %% Create the observer (Create the observer)
     omega = obsv(A,C);
@@ -70,11 +73,10 @@ function thermostat_control_simulation()
 
     Q = diag([10,10,10,10,10]);
     R = 1;
-
     L = lqr(A', C', Q, R)';
 
-    % disp('Observer poles:')
-    % disp(eig(A-L*C))
+    disp('Observer poles:')
+    disp(eig(A-L*C))
 
     %% SAVE .mat FILE 
     save("prob1.mat", "L", "K", "x_d")
@@ -119,10 +121,10 @@ function thermostat_control_simulation()
     figure;
     for k = 1:5
         subplot(5,1,k);
-        plot([tvec(1) tvec(end)]/3600, [x_d(k) x_d(k)], 'r:')        
+        plot([tvec(1) tvec(end)]/3600, [x_d(k) x_d(k)], 'r:', LineWidth=1.5)        
         hold on;
-        plot(tvec/3600, x_mat(k+P.n_states, :), 'g')
-        plot(tvec/3600, x_mat(k,:), 'b');
+        plot(tvec/3600, x_mat(k+P.n_states, :), 'g', LineWidth=1.5)
+        plot(tvec/3600, x_mat(k,:), 'b', LineWidth=1.5);
         ylabel(["x_", num2str(k)])
     end
     xlabel("Time (hr)")
@@ -134,7 +136,7 @@ function thermostat_control_simulation()
     for k = 1:5
         subplot(5,1,k);
         e_k = x_mat(k,:) - x_d(k);   % system state error
-        plot(tvec/3600, e_k, 'b');
+        plot(tvec/3600, e_k, 'b', LineWidth=1.5);
         ylabel(["e_", num2str(k)]);
         grid on;
     end

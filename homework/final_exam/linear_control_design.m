@@ -1,13 +1,13 @@
 % GET SYSTEM MATRICES 
-[A, B, C, x_d] = get_system(); 
+[A, B, C, x_d] = get_system();
 
 % DETERMINE THE CONTROLLABILITY OF THE SYSTEM
 % disp(size(A)) % 7x7 matrix
-gamma = ctrb(A,B); 
+gamma = ctrb(A,B);
 % disp(rank(gamma)) % rank = 5, not CC
 
 % DETERMINE THE OBSERVABILITY OF THE SYSTEM 
-omega = obsv(A,C); 
+omega = obsv(A,C);
 % disp(rank(omega)) % rank = 4, not CO
 
 %% CALCULATE A MINIMAL REALIZATION FOR THE STATE SPACE SYSTEM

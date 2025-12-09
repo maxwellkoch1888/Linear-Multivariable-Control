@@ -1,4 +1,4 @@
-function thermostat_control_simulation()
+function one_integral()
     close all;
     clear all;
 
@@ -50,6 +50,10 @@ function thermostat_control_simulation()
 
     % BUILD Q AND R MATRICES
     Q = diag([0, 0, 1, 0, 0, 1/(20^2)]);
+
+    Cc = [0,0,1,0,0,1/20];
+    omega_int = obsv(A_aug,Cc);
+    % rank(omega_int)
     
     R = diag([1/(0.5^2), 1/(0.5^2)]);
 
@@ -114,10 +118,10 @@ function thermostat_control_simulation()
     figure;
     for k = 1:5
         subplot(5,1,k);
-        plot([tvec(1) tvec(end)]/3600, [x_d(k) x_d(k)], 'r:')        
+        plot([tvec(1) tvec(end)]/3600, [x_d(k) x_d(k)], 'r:', LineWidth=1.5)        
         hold on;
-        plot(tvec/3600, x_mat(k+P.n_states, :), 'g')
-        plot(tvec/3600, x_mat(k,:), 'b');
+        plot(tvec/3600, x_mat(k+P.n_states, :), 'g', LineWidth=1.5)
+        plot(tvec/3600, x_mat(k,:), 'b', LineWidth=1.5);
         ylabel(["x_", num2str(k)])
     end
     xlabel("Time (hr)")
